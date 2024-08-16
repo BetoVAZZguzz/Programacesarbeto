@@ -1,0 +1,239 @@
+﻿using System;
+using System.IO;
+
+class Program
+{
+    // Variable para almacenar el resultado de la última operación realizada
+    static double[,] lastResult;
+
+    static void Main(string[] args)
+    {
+        int option = 0; // Variable para almacenar la opción seleccionada por el usuario
+
+        do
+        {
+            // Mostrar el menú de operaciones de matrices
+            Console.WriteLine("Menu de Operaciones de Matrices:");
+            Console.WriteLine("1. Sumar Matrices");
+            Console.WriteLine("2. Restar Matrices");
+            Console.WriteLine("3. Multiplicar Matrices");
+            Console.WriteLine("4. Mostrar Última Matriz Resultante");
+            Console.WriteLine("5. Salir");
+            Console.Write("Seleccione una opción: ");
+
+            // Validar la opción seleccionada
+            if (!int.TryParse(Console.ReadLine(), out option) || option < 1 || option > 5)
+            {
+                Console.WriteLine("Opción no válida. Intente de nuevo.");
+                continue;
+            }
+
+            // Ejecutar la operación correspondiente a la opción seleccionada
+            switch (option)
+            {
+                case 1:
+                    lastResult = AddMatrices(); // Sumar matrices
+                    break;
+                case 2:
+                    lastResult = SubtractMatrices(); // Restar matrices
+                    break;
+                case 3:
+                    lastResult = MultiplyMatrices(); // Multiplicar matrices
+                    break;
+                case 4:
+                    ShowLastResult(); // Mostrar la última matriz resultante
+                    break;
+                case 5:
+                    Console.WriteLine("Saliendo del programa. ¡Hasta luego!"); // Mensaje de despedida
+                    break;
+            }
+
+            // Preguntar al usuario si desea realizar otro cálculo
+            if (option >= 1 && option <= 3)
+            {
+                Console.Write("¿Desea realizar otro cálculo de matrices? (s/n): ");
+                string anotherCalculation = Console.ReadLine().ToLower();
+                if (anotherCalculation != "s")
+                {
+                    option = 5; // Para salir del programa
+                }
+            }
+
+        } while (option != 5); // Continuar hasta que el usuario elija salir
+    }
+
+    // Función para sumar dos matrices
+    static double[,] AddMatrices()
+    {
+        // Obtener dimensiones de las matrices
+        int rows = GetDimension("filas");
+        int cols = GetDimension("columnas");
+
+        // Obtener las matrices de entrada
+        double[,] matrixA = GetMatrixInput(rows, cols, "A");
+        double[,] matrixB = GetMatrixInput(rows, cols, "B");
+
+        // Realizar la suma de matrices
+        double[,] result = new double[rows, cols];
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                result[i, j] = matrixA[i, j] + matrixB[i, j]; // Sumar elementos correspondientes
+            }
+        }
+
+        // Mostrar el resultado y guardar en archivo
+        DisplayMatrix(result);
+        SaveResultToFile(result, "suma.txt");
+        return result; // Retornar el resultado
+    }
+
+    // Función para restar dos matrices
+    static double[,] SubtractMatrices()
+    {
+        // Obtener dimensiones de las matrices
+        int rows = GetDimension("filas");
+        int cols = GetDimension("columnas");
+
+        // Obtener las matrices de entrada
+        double[,] matrixA = GetMatrixInput(rows, cols, "A");
+        double[,] matrixB = GetMatrixInput(rows, cols, "B");
+
+        // Realizar la resta de matrices
+        double[,] result = new double[rows, cols];
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                result[i, j] = matrixA[i, j] - matrixB[i, j]; // Restar elementos correspondientes
+            }
+        }
+
+        // Mostrar el resultado y guardar en archivo
+        DisplayMatrix(result);
+        SaveResultToFile(result, "resta.txt");
+        return result; // Retornar el resultado
+    }
+
+    // Función para multiplicar dos matrices
+    static double[,] MultiplyMatrices()
+    {
+        // Obtener dimensiones de la matriz A
+        int rowsA = GetDimension("filas de la matriz A");
+        int colsA = GetDimension("columnas de la matriz A");
+        // Obtener dimensiones de la matriz B
+        int rowsB = GetDimension("filas de la matriz B (debe ser igual a columnas de A)");
+        int colsB = GetDimension("columnas de la matriz B");
+
+        // Validar que las dimensiones sean compatibles para multiplicar
+        if (colsA != rowsB)
+        {
+            Console.WriteLine("Error: Las dimensiones son incompatibles para multiplicar matrices.");
+            return null; // Retornar null en caso de error
+        }
+
+        // Obtener las matrices de entrada
+        double[,] matrixA = GetMatrixInput(rowsA, colsA, "A");
+        double[,] matrixB = GetMatrixInput(rowsB, colsB, "B");
+
+        // Realizar la multiplicación de matrices
+        double[,] result = new double[rowsA, colsB];
+        for (int i = 0; i < rowsA; i++)
+        {
+            for (int j = 0; j < colsB; j++)
+            {
+                result[i, j] = 0; // Inicializar resultado
+                for (int k = 0; k < colsA; k++)
+                {
+                    result[i, j] += matrixA[i, k] * matrixB[k, j]; // Calcular el producto
+                }
+            }
+        }
+
+        // Mostrar el resultado y guardar en archivo
+        DisplayMatrix(result);
+        SaveResultToFile(result, "multiplicacion.txt");
+        return result; // Retornar el resultado
+    }
+
+    // Función para mostrar la última matriz resultante
+    static void ShowLastResult()
+    {
+        // Verificar si hay un resultado previo
+        if (lastResult == null)
+        {
+            Console.WriteLine("No hay resultados de la última operación.");
+            return; // Salir si no hay resultado
+        }
+
+        // Mostrar la última matriz resultante
+        Console.WriteLine("Última Matriz Resultante:");
+        DisplayMatrix(lastResult);
+    }
+
+    // Función para obtener una dimensión válida
+    static int GetDimension(string dimensionName)
+    {
+        // Obtener una dimensión válida
+        int dimension;
+        Console.Write($"Introduzca el número de {dimensionName}: ");
+        while (!int.TryParse(Console.ReadLine(), out dimension) || dimension <= 0)
+        {
+            Console.WriteLine("Por favor, introduzca un valor numérico válido.");
+        }
+        return dimension; // Retornar la dimensión válida
+    }
+
+    // Función para obtener los elementos de una matriz
+    static double[,] GetMatrixInput(int rows, int cols, string matrixName)
+    {
+        // Obtener los elementos de la matriz
+        double[,] matrix = new double[rows, cols];
+        Console.WriteLine($"Introduzca los elementos de la matriz {matrixName}:");
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                Console.Write($"Elemento [{i + 1}, {j + 1}]: ");
+                while (!double.TryParse(Console.ReadLine(), out matrix[i, j]))
+                {
+                    Console.WriteLine("Por favor, introduzca un valor numérico válido.");
+                }
+            }
+        }
+        return matrix; // Retornar la matriz obtenida
+    }
+
+    // Función para mostrar la matriz en pantalla
+    static void DisplayMatrix(double[,] matrix)
+    {
+        Console.WriteLine("Resultado:");
+        for (int i = 0; i < matrix.GetLength(0); i++)
+        {
+            for (int j = 0; j < matrix.GetLength(1); j++)
+            {
+                Console.Write($"{matrix[i, j]} "); // Mostrar cada elemento
+            }
+            Console.WriteLine(); // Nueva línea después de cada fila
+        }
+    }
+
+    // Función para guardar la matriz en un archivo de texto
+    static void SaveResultToFile(double[,] matrix, string fileName)
+    {
+        using (StreamWriter writer = new StreamWriter(fileName))
+        {
+            for (int i = 0; i < matrix.GetLength(0); i++)
+            {
+                for (int j = 0; j < matrix.GetLength(1); j++)
+                {
+                    writer.Write($"{matrix[i, j]} "); // Escribir cada elemento
+                }
+                writer.WriteLine(); // Nueva línea después de cada fila
+            }
+        }
+        // Mensaje indicando que la matriz fue almacenada
+        Console.WriteLine($"La Matriz Resultante del Cálculo Elegido fue almacenada en el archivo {fileName}.");
+    }
+}
